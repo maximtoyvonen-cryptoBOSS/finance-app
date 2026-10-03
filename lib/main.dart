@@ -4,8 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/home_dashboard.dart';
 import 'screens/history_view.dart';
 import 'screens/analytics_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
+import 'providers/providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +16,13 @@ void main() async {
   } catch (e) {
     print("Could not load .env file");
   }
+  final prefs = await SharedPreferences.getInstance();
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
     ),
   );
 }

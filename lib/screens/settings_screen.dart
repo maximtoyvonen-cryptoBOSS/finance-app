@@ -30,6 +30,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsyncValue = ref.watch(transactionsProvider);
+    final currency = ref.watch(currencyProvider);
+    final currencies = ['\$', '€', '£', '¥', '₽', '₸'];
 
     return Scaffold(
       appBar: AppBar(
@@ -37,6 +39,25 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: ListView(
         children: [
+          const Padding(
+             padding: EdgeInsets.all(16.0),
+             child: Text('General Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          ListTile(
+             leading: const Icon(Icons.attach_money),
+             title: const Text('Currency'),
+             trailing: DropdownButton<String>(
+               value: currency,
+               underline: const SizedBox(),
+               items: currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+               onChanged: (value) {
+                 if (value != null) {
+                   ref.read(currencyProvider.notifier).setCurrency(value);
+                 }
+               },
+             ),
+          ),
+          const Divider(),
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text('Data Management', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

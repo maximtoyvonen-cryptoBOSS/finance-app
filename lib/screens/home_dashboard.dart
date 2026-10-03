@@ -15,6 +15,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
   final TextEditingController _inputController = TextEditingController();
   bool _isProcessing = false;
   bool _isListening = false;
+  String _selectedInputType = 'expense';
 
   @override
   void initState() {
@@ -26,16 +27,40 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
     if (text.isEmpty) return;
     setState(() => _isProcessing = true);
 
-    final success = await ref.read(transactionsProvider.notifier).addTransactionFromInput(text);
+    // Prepend the selected type to guide the LLM
+    final queryText = 'Type: $_selectedInputType. $text';
+    final success = await ref.read(transactionsProvider.notifier).addTransactionFromInput(queryText);
 
     if (!mounted) return;
     setState(() => _isProcessing = false);
 
     if (success) {
       _inputController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction added!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline, color: AppTheme.incomeGreen),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Transaction added successfully!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500))),
+            ],
+          ),
+          margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to add transaction.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: AppTheme.expenseRose),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Failed to add transaction.', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500))),
+            ],
+          ),
+          margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+        ),
+      );
     }
   }
 
@@ -83,6 +108,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
   Widget build(BuildContext context) {
     final transactionsAsyncValue = ref.watch(transactionsProvider);
     final budgetsAsyncValue = ref.watch(budgetsProvider);
+    final currency = ref.watch(currencyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -115,7 +141,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                     children: [
                       Text('Monthly Balance', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14)),
                       const SizedBox(height: 8),
-                      Text('$ ${balance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text('$currency ${balance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -130,7 +156,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                               children: [
                                 const Icon(Icons.arrow_downward, color: AppTheme.incomeGreen, size: 16),
                                 const SizedBox(width: 4),
-                                Text('$${totalIncome.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.incomeGreen, fontWeight: FontWeight.bold)),
+                                Text('$currency${totalIncome.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.incomeGreen, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -145,7 +171,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                               children: [
                                 const Icon(Icons.arrow_upward, color: AppTheme.expenseRose, size: 16),
                                 const SizedBox(width: 4),
-                                Text('$${totalExpense.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.expenseRose, fontWeight: FontWeight.bold)),
+                                Text('$currency${totalExpense.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.expenseRose, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -221,8 +247,8 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('$ ${spent.toStringAsFixed(0)} spent', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
-                            Text('$ ${overall.amount.toStringAsFixed(0)} limit', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                            Text('$currency ${spent.toStringAsFixed(0)} spent', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                            Text('$currency ${overall.amount.toStringAsFixed(0)} limit', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
                           ],
                         ),
                       ],
@@ -281,7 +307,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                             title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.w600)),
                             subtitle: Text(tx.note, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                             trailing: Text(
-                              "${isIncome ? '+' : '-'}$${tx.amount.toStringAsFixed(2)}",
+                              "${isIncome ? '+' : '-'}$currency${tx.amount.toStringAsFixed(2)}",
                               style: TextStyle(
                                 color: isIncome ? AppTheme.incomeGreen : Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -302,12 +328,34 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
             // Input Bar
             Padding(
               padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'expense', label: Text('Expense')),
+                        ButtonSegment(value: 'income', label: Text('Income')),
+                      ],
+                      selected: {_selectedInputType},
+                      onSelectionChanged: (Set<String> newSelection) {
+                        setState(() {
+                          _selectedInputType = newSelection.first;
+                        });
+                      },
+                      style: SegmentedButton.styleFrom(
+                        backgroundColor: AppTheme.surface,
+                        selectedBackgroundColor: _selectedInputType == 'expense' ? AppTheme.expenseRose.withValues(alpha: 0.2) : AppTheme.incomeGreen.withValues(alpha: 0.2),
+                        selectedForegroundColor: _selectedInputType == 'expense' ? AppTheme.expenseRose : AppTheme.incomeGreen,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    ),
                 child: Row(
                   children: [
                     Expanded(
@@ -346,8 +394,10 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                         ),
                       ),
                     ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

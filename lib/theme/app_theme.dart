@@ -54,6 +54,15 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(color: Colors.grey),
       ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        ),
+        elevation: 8,
+      ),
     );
   }
 }

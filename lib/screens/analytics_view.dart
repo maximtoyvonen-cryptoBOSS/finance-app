@@ -33,6 +33,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
   @override
   Widget build(BuildContext context) {
     final transactionsAsyncValue = ref.watch(transactionsProvider);
+    final currency = ref.watch(currencyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -111,7 +112,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                       children: [
                         Text('Total Spent', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
                         const SizedBox(height: 4),
-                        Text('$${totalExpense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text('$currency${totalExpense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
                       ],
                     )
                   ],
@@ -158,7 +159,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(category, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                            Text('$${amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                            Text('$currency${amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                           ],
                                         ),
                                         const SizedBox(height: 8),

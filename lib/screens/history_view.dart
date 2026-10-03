@@ -36,6 +36,7 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
   @override
   Widget build(BuildContext context) {
     final transactionsAsyncValue = ref.watch(transactionsProvider);
+    final currency = ref.watch(currencyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -179,7 +180,7 @@ class _HistoryViewState extends ConsumerState<HistoryView> {
                                   title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   subtitle: Text(tx.note, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                                   trailing: Text(
-                                    "${isIncome ? '+' : '-'}$${tx.amount.toStringAsFixed(2)}",
+                                    "${isIncome ? '+' : '-'}$currency${tx.amount.toStringAsFixed(2)}",
                                     style: TextStyle(
                                       color: isIncome ? AppTheme.incomeGreen : Colors.white,
                                       fontWeight: FontWeight.bold,

@@ -1,9 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction_model.dart';
 import '../models/budget_model.dart';
 import '../repositories/transaction_repository.dart';
 import '../repositories/budget_repository.dart';
 import '../services/voice_service.dart';
+
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError(); // Initialized in main.dart
+});
+
+final currencyProvider = StateNotifierProvider<CurrencyNotifier, String>((ref) {
+  return CurrencyNotifier(ref.watch(sharedPreferencesProvider));
+});
+
+class CurrencyNotifier extends StateNotifier<String> {
+  final SharedPreferences _prefs;
+  CurrencyNotifier(this._prefs) : super(_prefs.getString('currency') ?? '\$');
+
+  Future<void> setCurrency(String currency) async {
+    await _prefs.setString('currency', currency);
+    state = currency;
+  }
+}
 
 final transactionRepositoryProvider = Provider((ref) => TransactionRepository());
 final budgetRepositoryProvider = Provider((ref) => BudgetRepository());
